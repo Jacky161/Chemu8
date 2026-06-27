@@ -20,6 +20,11 @@ impl Chip8Instr {
         self.bits & 0x000F
     }
 
+    pub fn n(&self) -> u8 {
+        // n = last hex char
+        (self.bits & 0x000F) as u8
+    }
+
     pub fn nn(&self) -> u8 {
         // nn = last 2 hex chars
         (self.bits & 0x00FF) as u8

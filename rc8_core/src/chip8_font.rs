@@ -1,3 +1,4 @@
+pub const FONTSET_START_ADDR: usize = 0;
 pub const FONTSET_SIZE: usize = 80;
 
 pub const FONTSET: [u8; FONTSET_SIZE] = [

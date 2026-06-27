@@ -5,8 +5,9 @@ mod chip8_instr;
 use chip8_const::*;
 use chip8_instr::Chip8Instr;
 
-use crate::chip8_font::FONTSET;
-use crate::chip8_font::FONTSET_SIZE;
+use chip8_font::FONTSET;
+use chip8_font::FONTSET_SIZE;
+use chip8_font::FONTSET_START_ADDR;
 
 pub struct Chip8 {
     // Each pixel can either be on/true (white) or off/false (black)
@@ -48,7 +49,7 @@ impl Chip8 {
         };
 
         // Copy fonts into RAM
-        c8.ram[..FONTSET_SIZE].copy_from_slice(&FONTSET);
+        c8.ram[FONTSET_START_ADDR..FONTSET_SIZE].copy_from_slice(&FONTSET);
 
         c8
     }
@@ -229,7 +230,33 @@ impl Chip8 {
 
     // DSPR
     fn op_dxyn(&mut self, instr: Chip8Instr) {
-        // TODO
+        // Draw a sprite with N bytes (height) to the screen starting at (VX, VY)
+        let mut x = (self.v_reg[instr.reg_x()] % SCREEN_WIDTH as u8) as usize;
+        let mut y = (self.v_reg[instr.reg_y()] % SCREEN_HEIGHT as u8) as usize;
+        let num_bytes = instr.n() as usize;
+        let sprite_start = self.i_reg as usize;
+        let mut collision = false;
+
+        // Loop over all bytes
+        for byte in &self.ram[sprite_start..sprite_start + num_bytes] {
+            // Loop over all bits in the byte (each sprite is 8 pixels wide)
+            for bit_idx in 0..8 {
+                // If the pixel in the sprite is set
+                if byte & (0x80 >> bit_idx) != 0 {
+                    // Set collision bit
+                    collision |= self.screen[x + SCREEN_WIDTH * y];
+
+                    // Draw to screen
+                    self.screen[x + SCREEN_WIDTH * y] ^= true;
+                }
+
+                (x, _) = x.overflowing_add(1);
+            }
+
+            (y, _) = y.overflowing_add(1);
+        }
+
+        self.v_reg[0xF] = if collision { 1 } else { 0 };
     }
 
     // SKP
@@ -288,7 +315,9 @@ impl Chip8 {
     }
 
     fn op_fx29(&mut self, instr: Chip8Instr) {
-        // TODO
+        // Set the I register to font address of the hex character in VX
+        let hex_char = (self.v_reg[instr.reg_x()] & 0x0F) as u16;
+        self.i_reg = (FONTSET_START_ADDR as u16) + (hex_char * 5);
     }
 
     fn op_fx33(&mut self, instr: Chip8Instr) {
@@ -368,13 +397,24 @@ impl Chip8 {
         }
     }
 
-    // Should be run at 60Hz?
+    // Runs at Clock Rate
     pub fn tick(&mut self) {
         // Fetch
         let instr = self.fetch();
 
         // Decode and Execute
         self.execute(instr);
+    }
+
+    // Runs at 60Hz
+    pub fn tick_timers(&mut self) {
+        self.dt = self.dt.saturating_sub(1);
+        self.st = self.st.saturating_sub(1);
+
+        if self.st > 0 {
+            // Make a sound while non-zero
+            println!("BEEP!");
+        }
     }
 
     // Load ROM

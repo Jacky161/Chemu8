@@ -175,8 +175,12 @@ impl Chip8 {
     fn op_8xy6(&mut self, instr: Chip8Instr) {
         // VX = VY >> 1
         // VF = LSB of VY
-        self.v_reg[instr.reg_x()] = self.v_reg[instr.reg_y()] >> 1;
-        self.v_reg[0xF] = self.v_reg[instr.reg_y()] & 1;
+
+        // In case reg_x and reg_y are the same !!
+        let orig_val = self.v_reg[instr.reg_y()];
+
+        self.v_reg[instr.reg_x()] = orig_val >> 1;
+        self.v_reg[0xF] = orig_val & 1;
     }
 
     // SUB2
@@ -193,8 +197,12 @@ impl Chip8 {
     fn op_8xye(&mut self, instr: Chip8Instr) {
         // VX = VY << 1
         // VF = LSB of VY
-        self.v_reg[instr.reg_x()] = self.v_reg[instr.reg_y()] << 1;
-        self.v_reg[0xF] = (self.v_reg[instr.reg_y()] & 0x8) >> 7;
+
+        // In case reg_x and reg_y are the same !!
+        let orig_val = self.v_reg[instr.reg_y()];
+
+        self.v_reg[instr.reg_x()] = orig_val << 1;
+        self.v_reg[0xF] = (orig_val & 0x80) >> 7;
     }
 
     // SNE

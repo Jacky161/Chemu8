@@ -326,6 +326,7 @@ impl Chip8 {
         }
     }
 
+    // NOTE: Differing implementations based on reference.
     fn op_fx55(&mut self, instr: Chip8Instr) {
         // Write registers V0-VX into memory from I-I+X
         for i in 0..=instr.reg_x() {
@@ -334,6 +335,7 @@ impl Chip8 {
         }
     }
 
+    // NOTE: Differing implementations based on reference.
     fn op_fx65(&mut self, instr: Chip8Instr) {
         // Read registers V0-VX from memory at I-I+X
         for i in 0..=instr.reg_x() {
@@ -418,5 +420,9 @@ impl Chip8 {
         let start = PC_START_ADDR as usize;
         let end = start + data.len() as usize;
         self.ram[start..end].copy_from_slice(data);
+    }
+
+    pub fn set_key(&mut self, key: usize, state: bool) {
+        self.keys[key] = state;
     }
 }

@@ -1,3 +1,5 @@
+use std::{env, fs, process};
+
 use rc8_core::Chip8;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -13,9 +15,19 @@ const SCALE: u32 = 15;
 const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
 
-
 fn main() {
+    // Read ROM file from CLI args
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        eprintln!("Usage: {} <path to rom>", args[0]);
+        process::exit(1);
+    }
+
     let mut chip8 = Chip8::new();
+    let rom_data = fs::read(&args[1]).expect("Failed to read ROM!");
+    chip8.load(&rom_data);
+
+    // Setup SDL and Display
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
@@ -48,9 +60,7 @@ fn main() {
         draw_screen(&chip8, &mut canvas);
         chip8.tick();
     }
-
 }
-
 
 fn draw_screen(chip8: &Chip8, canvas: &mut Canvas<Window>) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));

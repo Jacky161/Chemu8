@@ -79,7 +79,7 @@ impl Chip8 {
 
     // JMP
     fn op_1nnn(&mut self, instr: Chip8Instr) {
-        self.pc = instr.nnn() & 0x0FFF;
+        self.pc = instr.nnn();
     }
 
     // JAL
@@ -164,12 +164,10 @@ impl Chip8 {
     // SUB
     fn op_8xy5(&mut self, instr: Chip8Instr) {
         // VX = VX - VY
-        // VF set to 1 on overflow
-        let (result, overflow) =
-            self.v_reg[instr.reg_x()].overflowing_sub(self.v_reg[instr.reg_y()]);
+        let (result, borrow) = self.v_reg[instr.reg_x()].overflowing_sub(self.v_reg[instr.reg_y()]);
 
         self.v_reg[instr.reg_x()] = result;
-        self.v_reg[0xF] = if overflow { 1 } else { 0 };
+        self.v_reg[0xF] = if borrow { 0 } else { 1 };
     }
 
     // SRL
@@ -184,12 +182,10 @@ impl Chip8 {
     // SUB2
     fn op_8xy7(&mut self, instr: Chip8Instr) {
         // VX = VY - VX
-        // VF set to 1 on overflow
-        let (result, overflow) =
-            self.v_reg[instr.reg_y()].overflowing_sub(self.v_reg[instr.reg_x()]);
+        let (result, borrow) = self.v_reg[instr.reg_y()].overflowing_sub(self.v_reg[instr.reg_x()]);
 
         self.v_reg[instr.reg_x()] = result;
-        self.v_reg[0xF] = if overflow { 1 } else { 0 };
+        self.v_reg[0xF] = if borrow { 0 } else { 1 };
     }
 
     // SLL
@@ -198,7 +194,7 @@ impl Chip8 {
         // VX = VY << 1
         // VF = LSB of VY
         self.v_reg[instr.reg_x()] = self.v_reg[instr.reg_y()] << 1;
-        self.v_reg[0xF] = self.v_reg[instr.reg_y()] & 0x8;
+        self.v_reg[0xF] = (self.v_reg[instr.reg_y()] & 0x8) >> 7;
     }
 
     // SNE
@@ -231,15 +227,15 @@ impl Chip8 {
     // DSPR
     fn op_dxyn(&mut self, instr: Chip8Instr) {
         // Draw a sprite with N bytes (height) to the screen starting at (VX, VY)
-        let mut x = (self.v_reg[instr.reg_x()] % SCREEN_WIDTH as u8) as usize;
-        let mut y = (self.v_reg[instr.reg_y()] % SCREEN_HEIGHT as u8) as usize;
         let num_bytes = instr.n() as usize;
         let sprite_start = self.i_reg as usize;
         let mut collision = false;
 
         // Loop over all bytes
+        let mut y = (self.v_reg[instr.reg_y()] % SCREEN_HEIGHT as u8) as usize;
         for byte in &self.ram[sprite_start..sprite_start + num_bytes] {
             // Loop over all bits in the byte (each sprite is 8 pixels wide)
+            let mut x = (self.v_reg[instr.reg_x()] % SCREEN_WIDTH as u8) as usize;
             for bit_idx in 0..8 {
                 // If the pixel in the sprite is set
                 if byte & (0x80 >> bit_idx) != 0 {

@@ -2,6 +2,7 @@ use std::{env, fs, process};
 
 use rc8_core::Chip8;
 use sdl2::event::Event;
+use sdl2::gfx::framerate::FPSManager;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -10,6 +11,8 @@ use sdl2::video::Window;
 
 const SCREEN_WIDTH: usize = 64;
 const SCREEN_HEIGHT: usize = 32;
+const TICKS_PER_FRAME: usize = 10;
+const FRAMERATE: u32 = 60;
 
 const SCALE: u32 = 15;
 const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
@@ -40,6 +43,10 @@ fn main() {
 
     let mut canvas = window.into_canvas().present_vsync().build().unwrap();
 
+    // Limit framerate
+    let mut fps_manager = FPSManager::new();
+    fps_manager.set_framerate(FRAMERATE).expect("Failed to limit framerate!");
+
     canvas.clear();
     canvas.present();
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -57,8 +64,15 @@ fn main() {
             }
         }
 
+        for _ in 0..TICKS_PER_FRAME {
+            chip8.tick();
+        }
+        chip8.tick_timers();
+
         draw_screen(&chip8, &mut canvas);
-        chip8.tick();
+
+        // Delay to maintain framerate
+        fps_manager.delay();
     }
 }
 

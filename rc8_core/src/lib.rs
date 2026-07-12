@@ -136,18 +136,27 @@ impl Chip8 {
     fn op_8xy1(&mut self, instr: Chip8Instr) {
         // Set VX to VX | VY
         self.v_reg[instr.reg_x()] |= self.v_reg[instr.reg_y()];
+
+        // Quirk: Reset VF to 0
+        self.v_reg[0xF] = 0;
     }
 
     // SEAND
     fn op_8xy2(&mut self, instr: Chip8Instr) {
         // Set VX to VX & VY
         self.v_reg[instr.reg_x()] &= self.v_reg[instr.reg_y()];
+
+        // Quirk: Reset VF to 0
+        self.v_reg[0xF] = 0;
     }
 
     // SEXOR
     fn op_8xy3(&mut self, instr: Chip8Instr) {
         // Set VX to VX ^ VY
         self.v_reg[instr.reg_x()] ^= self.v_reg[instr.reg_y()];
+
+        // Quirk: Reset VF to 0
+        self.v_reg[0xF] = 0;
     }
 
     // ADD
@@ -245,8 +254,8 @@ impl Chip8 {
             // Loop over all bits in the byte (each sprite is 8 pixels wide)
             let mut x = (self.v_reg[instr.reg_x()] % SCREEN_WIDTH as u8) as usize;
             for bit_idx in 0..8 {
-                // If the pixel in the sprite is set
-                if byte & (0x80 >> bit_idx) != 0 {
+                // If the pixel in the sprite is set and in range
+                if byte & (0x80 >> bit_idx) != 0 && x < SCREEN_WIDTH && y < SCREEN_HEIGHT {
                     // Set collision bit
                     collision |= self.screen[x + SCREEN_WIDTH * y];
 
@@ -254,10 +263,10 @@ impl Chip8 {
                     self.screen[x + SCREEN_WIDTH * y] ^= true;
                 }
 
-                (x, _) = x.overflowing_add(1);
+                x = x + 1;
             }
 
-            (y, _) = y.overflowing_add(1);
+            y = y + 1;
         }
 
         self.v_reg[0xF] = if collision { 1 } else { 0 };

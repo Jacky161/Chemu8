@@ -1,6 +1,11 @@
+mod audio;
+
 use std::{env, fs, process};
 
+use audio::SineWave;
 use rc8_core::Chip8;
+use sdl2::Sdl;
+use sdl2::audio::{AudioDevice, AudioSpecDesired};
 use sdl2::event::Event;
 use sdl2::gfx::framerate::FPSManager;
 use sdl2::keyboard::Keycode;
@@ -32,8 +37,15 @@ fn main() {
 
     // Setup SDL and Display
     let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
+    let audio_device = setup_audio(&sdl_context);
+    let (fps_manager, canvas) = setup_display(&sdl_context);
 
+    run_loop(chip8, &sdl_context, canvas, fps_manager, audio_device);
+}
+
+fn setup_display(sdl_context: &Sdl) -> (FPSManager, Canvas<Window>) {
+    // SETUP DISPLAY
+    let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
         .window("RC8 Emulator", WINDOW_WIDTH, WINDOW_HEIGHT)
         .position_centered()
@@ -51,6 +63,40 @@ fn main() {
 
     canvas.clear();
     canvas.present();
+
+    return (fps_manager, canvas);
+}
+
+fn setup_audio(sdl_context: &Sdl) -> AudioDevice<SineWave> {
+    let audio_subsystem = sdl_context.audio().unwrap();
+
+    let desired_spec = AudioSpecDesired {
+        freq: Some(44100),
+        channels: Some(1), // mono
+        samples: None,     // default sample size
+    };
+
+    let device = audio_subsystem
+        .open_playback(None, &desired_spec, |spec| {
+            // initialize the audio callback
+            SineWave {
+                phase_inc: 1000.0 / spec.freq as f32,
+                phase: 0.0,
+                volume: 0.25,
+            }
+        })
+        .unwrap();
+
+    return device;
+}
+
+fn run_loop(
+    mut chip8: Chip8,
+    sdl_context: &Sdl,
+    mut canvas: Canvas<Window>,
+    mut fps_manager: FPSManager,
+    mut audio_device: AudioDevice<SineWave>,
+) {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     'gameloop: loop {
@@ -83,7 +129,12 @@ fn main() {
         for _ in 0..TICKS_PER_FRAME {
             chip8.tick();
         }
-        chip8.tick_timers();
+
+        if chip8.tick_timers() {
+            audio_device.resume();
+        } else {
+            audio_device.pause();
+        }
 
         draw_screen(&chip8, &mut canvas);
 

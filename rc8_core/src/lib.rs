@@ -445,14 +445,15 @@ impl Chip8 {
     }
 
     // Runs at 60Hz
-    pub fn tick_timers(&mut self) {
+    pub fn tick_timers(&mut self) -> bool {
         self.dt = self.dt.saturating_sub(1);
         self.st = self.st.saturating_sub(1);
 
         if self.st > 0 {
-            // Make a sound while non-zero
-            println!("BEEP!");
+            return true;
         }
+
+        return false;
     }
 
     pub fn notify_vblank(&mut self) {

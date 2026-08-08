@@ -95,7 +95,7 @@ fn run_loop(
     sdl_context: &Sdl,
     mut canvas: Canvas<Window>,
     mut fps_manager: FPSManager,
-    mut audio_device: AudioDevice<SineWave>,
+    audio_device: AudioDevice<SineWave>,
 ) {
     let mut event_pump = sdl_context.event_pump().unwrap();
 

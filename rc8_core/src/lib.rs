@@ -30,6 +30,9 @@ pub struct Chip8 {
 
     // Input keys
     keys: [bool; NUM_KEYS],
+
+    // Only allow 1 draw sprite operation per screen refresh (60Hz)
+    wait_for_v_blank: bool,
 }
 
 impl Chip8 {
@@ -46,6 +49,7 @@ impl Chip8 {
             dt: 0,
             st: 0,
             keys: [false; NUM_KEYS],
+            wait_for_v_blank: false,
         };
 
         // Copy fonts into RAM
@@ -270,6 +274,7 @@ impl Chip8 {
         }
 
         self.v_reg[0xF] = if collision { 1 } else { 0 };
+        self.wait_for_v_blank = true;
     }
 
     // SKP
@@ -414,6 +419,10 @@ impl Chip8 {
 
     // Runs at Clock Rate
     pub fn tick(&mut self) {
+        if self.wait_for_v_blank {
+            return;
+        }
+
         // Fetch
         let instr = self.fetch();
 
@@ -430,6 +439,10 @@ impl Chip8 {
             // Make a sound while non-zero
             println!("BEEP!");
         }
+    }
+
+    pub fn notify_vblank(&mut self) {
+        self.wait_for_v_blank = false;
     }
 
     // Load ROM

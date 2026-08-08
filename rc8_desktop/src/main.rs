@@ -88,6 +88,7 @@ fn main() {
         draw_screen(&chip8, &mut canvas);
 
         // Delay to maintain framerate
+        chip8.notify_vblank();
         fps_manager.delay();
     }
 }

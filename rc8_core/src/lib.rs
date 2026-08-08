@@ -30,6 +30,8 @@ pub struct Chip8 {
 
     // Input keys
     keys: [bool; NUM_KEYS],
+    keys_prev: [bool; NUM_KEYS],  // maintain 1 frame of history
+    state_fx0a_started: bool,
 
     // Only allow 1 draw sprite operation per screen refresh (60Hz)
     wait_for_v_blank: bool,
@@ -49,6 +51,8 @@ impl Chip8 {
             dt: 0,
             st: 0,
             keys: [false; NUM_KEYS],
+            keys_prev: [false; NUM_KEYS],
+            state_fx0a_started: false,
             wait_for_v_blank: false,
         };
 
@@ -303,15 +307,25 @@ impl Chip8 {
 
     // WKP
     fn op_fx0a(&mut self, instr: Chip8Instr) {
-        // Wait for a keypress and store into VX
-        let pressed_key = self.keys.iter().position(|x| *x);
-
-        if pressed_key.is_some() {
-            self.v_reg[instr.reg_x()] = pressed_key.unwrap() as u8;
-        } else {
-            // Keep blocking until a key is pressed
-            self.pc -= 2;
+        // First time this instruction is run, set all keys to not pressed
+        // Need to wait for a brand new key press
+        if !self.state_fx0a_started {
+            self.keys_prev.fill(false);
+            self.keys.fill(false);
+            self.state_fx0a_started = true;
         }
+
+        for (i, (key_prev, key)) in self.keys_prev.iter().zip(&self.keys).enumerate() {
+            if *key_prev && !*key {
+                // Key was pressed in last frame, but not current
+                self.v_reg[instr.reg_x()] = i as u8;
+                self.state_fx0a_started = false;
+                return;
+            }
+        }
+
+        // Keep blocking until condition is met
+        self.pc -= 2;
     }
 
     // STDT
@@ -453,6 +467,8 @@ impl Chip8 {
     }
 
     pub fn set_key(&mut self, key: usize, state: bool) {
+        // Copy previous history
+        self.keys_prev.copy_from_slice(&self.keys);
         self.keys[key] = state;
     }
 }

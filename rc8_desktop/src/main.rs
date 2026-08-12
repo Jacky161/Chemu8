@@ -1,9 +1,12 @@
 mod audio;
 
-use std::{env, fs, process};
+use std::fs;
 
 use audio::SineWave;
 use rc8_core::Chip8;
+
+use clap::Parser;
+
 use sdl2::Sdl;
 use sdl2::audio::{AudioDevice, AudioSpecDesired};
 use sdl2::event::Event;
@@ -23,16 +26,19 @@ const SCALE: u32 = 15;
 const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Path to the rom to load.
+    rom_path: String,
+}
+
 fn main() {
     // Read ROM file from CLI args
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        eprintln!("Usage: {} <path to rom>", args[0]);
-        process::exit(1);
-    }
+    let args = Args::parse();
 
     let mut chip8 = Chip8::new();
-    let rom_data = fs::read(&args[1]).expect("Failed to read ROM!");
+    let rom_data = fs::read(args.rom_path).expect("Failed to read ROM!");
     chip8.load(&rom_data);
 
     // Setup SDL and Display

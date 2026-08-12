@@ -35,11 +35,17 @@ pub struct Chip8 {
 
     // Only allow 1 draw sprite operation per screen refresh (60Hz)
     wait_for_v_blank: bool,
+
+    // Quirks
+    quirk_8xy6: bool,
+    quirk_8xye: bool,
+    quirk_fx55: bool,
+    quirk_fx65: bool,
 }
 
 impl Chip8 {
     // Constructor
-    pub fn new() -> Self {
+    pub fn new(quirk_8xy6: bool, quirk_8xye: bool, quirk_fx55: bool, quirk_fx65: bool) -> Self {
         let mut c8 = Self {
             pc: PC_START_ADDR,
             v_reg: [0; NUM_REGS],
@@ -54,6 +60,10 @@ impl Chip8 {
             keys_prev: [false; NUM_KEYS],
             state_fx0a_started: false,
             wait_for_v_blank: false,
+            quirk_8xy6,
+            quirk_8xye,
+            quirk_fx55,
+            quirk_fx65,
         };
 
         // Copy fonts into RAM
@@ -188,15 +198,18 @@ impl Chip8 {
     }
 
     // SRL
-    // NOTE: Differing implementations based on reference.
     fn op_8xy6(&mut self, instr: Chip8Instr) {
         // VX = VY >> 1
         // VF = LSB of VY
 
-        // In case reg_x and reg_y are the same !!
-        let orig_val = self.v_reg[instr.reg_y()];
+        // Quirk on -> always operate on VX
+        let reg_x = instr.reg_x();
+        let reg_y = if self.quirk_8xy6 {reg_x} else {instr.reg_y()};
 
-        self.v_reg[instr.reg_x()] = orig_val >> 1;
+        // In case reg_x and reg_y are the same !!
+        let orig_val = self.v_reg[reg_y];
+
+        self.v_reg[reg_x] = orig_val >> 1;
         self.v_reg[0xF] = orig_val & 1;
     }
 
@@ -210,15 +223,18 @@ impl Chip8 {
     }
 
     // SLL
-    // NOTE: Differing implementations based on reference.
     fn op_8xye(&mut self, instr: Chip8Instr) {
         // VX = VY << 1
         // VF = LSB of VY
 
-        // In case reg_x and reg_y are the same !!
-        let orig_val = self.v_reg[instr.reg_y()];
+        // Quirk on -> always operate on VX
+        let reg_x = instr.reg_x();
+        let reg_y = if self.quirk_8xye {reg_x} else {instr.reg_y()};
 
-        self.v_reg[instr.reg_x()] = orig_val << 1;
+        // In case reg_x and reg_y are the same !!
+        let orig_val = self.v_reg[reg_y];
+
+        self.v_reg[reg_x] = orig_val << 1;
         self.v_reg[0xF] = (orig_val & 0x80) >> 7;
     }
 
@@ -362,21 +378,31 @@ impl Chip8 {
         }
     }
 
-    // NOTE: Differing implementations based on reference.
     fn op_fx55(&mut self, instr: Chip8Instr) {
         // Write registers V0-VX into memory from I-I+X
+        let i_reg_start = self.i_reg;
         for i in 0..=instr.reg_x() {
             self.ram[self.i_reg as usize] = self.v_reg[i];
             self.i_reg += 1;
         }
+
+        // Quirk on -> don't modify i_reg
+        if self.quirk_fx55 {
+            self.i_reg = i_reg_start
+        }
     }
 
-    // NOTE: Differing implementations based on reference.
     fn op_fx65(&mut self, instr: Chip8Instr) {
         // Read registers V0-VX from memory at I-I+X
+        let i_reg_start = self.i_reg;
         for i in 0..=instr.reg_x() {
             self.v_reg[i] = self.ram[self.i_reg as usize];
             self.i_reg += 1;
+        }
+
+        // Quirk on -> don't modify i_reg
+        if self.quirk_fx65 {
+            self.i_reg = i_reg_start
         }
     }
 

@@ -31,13 +31,18 @@ const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
 struct Args {
     /// Path to the rom to load.
     rom_path: String,
+
+    /// Enable all Cowgod quirks. Some games rely on an inaccurate implementation of
+    /// certain instructions and won't run properly without this being enabled.
+    #[arg(long, default_value_t = false)]
+    quirk_cowgod: bool,
 }
 
 fn main() {
     // Read ROM file from CLI args
     let args = Args::parse();
 
-    let mut chip8 = Chip8::new();
+    let mut chip8 = Chip8::new(args.quirk_cowgod, args.quirk_cowgod, args.quirk_cowgod, args.quirk_cowgod);
     let rom_data = fs::read(args.rom_path).expect("Failed to read ROM!");
     chip8.load(&rom_data);
 

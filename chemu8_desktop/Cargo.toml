@@ -1,5 +1,5 @@
 [package]
-name = "rc8_desktop"
+name = "chemu8_desktop"
 version = "0.1.0"
 edition = "2024"
 description = "A Chip8 emulator written in Rust."
@@ -7,6 +7,6 @@ description = "A Chip8 emulator written in Rust."
 [dependencies]
 sdl2 = { version = "0.38.0", features = ["gfx", "ttf"] }
 rand = "0.10.1"
-rc8_core = { path = "../rc8_core" }
+chemu8_core = { path = "../chemu8_core" }
 clap = { version = "4.6.6", features = ["derive"] }
 rfd = "0.17.2"

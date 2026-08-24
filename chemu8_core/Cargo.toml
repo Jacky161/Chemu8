@@ -1,5 +1,5 @@
 [package]
-name = "rc8_core"
+name = "chemu8_core"
 version = "0.1.0"
 edition = "2024"
 

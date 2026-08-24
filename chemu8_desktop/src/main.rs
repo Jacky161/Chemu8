@@ -5,7 +5,7 @@ use std::fs;
 
 use crate::audio::SineWave;
 use crate::menu::{create_text_texture, get_centered_rect};
-use rc8_core::Chip8;
+use chemu8_core::Chip8;
 
 use clap::Parser;
 
@@ -104,7 +104,7 @@ fn setup_display(sdl_context: &Sdl) -> (FPSManager, Canvas<Window>) {
     // SETUP DISPLAY
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
-        .window("RC8 Emulator", WINDOW_WIDTH, WINDOW_HEIGHT)
+        .window("Chemu8", WINDOW_WIDTH, WINDOW_HEIGHT)
         .position_centered()
         .opengl()
         .build()
@@ -158,7 +158,7 @@ fn run_loop(
     let mut event_pump = sdl_context.event_pump().unwrap();
     let texture_creator = canvas.texture_creator();
     let menu_texture = create_text_texture(
-        "Welcome to RC8!\n1. Play\n2. Settings\n3. Exit",
+        "Welcome to Chemu8!\n1. Play\n2. Settings\n3. Exit",
         64,
         &texture_creator,
         ttf_context,

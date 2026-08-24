@@ -1,6 +1,18 @@
-# RC8
+# Chemu8
 
-RC8 is a WIP Chip8 emulator written in Rust.
+Chemu8 is a Chip8 emulator written in Rust. A desktop version is available, with a planned browser version coming soon.
+
+## Chemu8 Desktop
+
+Chemu8 Desktop can be compiled and ran on Windows/MacOS/Linux. The UI can be interacted with using the indicated number keys. If you prefer, you may use CLI arguments to pass the ROM file, as well as enable/disable quirks. The UI also features these same options.
+
+### Compiling and Running
+
+Download the latest release from the [releases page](https://github.com/Jacky161/Chemu8/releases) or clone the source code to compile it yourself.
+
+To compile the code yourself, `cd` into the `chemu8_desktop` folder and run `cargo build` or `cargo build --release` for a debug/release build respectively. You will need to have Rust installed on your system. The compiled binary is located in `./target/{debug/release}/chemu8_desktop`.
+
+Use the `--help` flag to see all the available CLI arguments.
 
 ## ROMs
 

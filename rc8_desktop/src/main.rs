@@ -1,8 +1,10 @@
 mod audio;
+mod menu;
 
 use std::fs;
 
-use audio::SineWave;
+use crate::audio::SineWave;
+use crate::menu::{create_text_texture, get_centered_rect};
 use rc8_core::Chip8;
 
 use clap::Parser;
@@ -14,8 +16,9 @@ use sdl2::gfx::framerate::FPSManager;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::Canvas;
-use sdl2::video::Window;
+use sdl2::render::{Canvas, Texture, TextureCreator};
+use sdl2::ttf::Sdl2TtfContext;
+use sdl2::video::{Window, WindowContext};
 
 const SCREEN_WIDTH: usize = 64;
 const SCREEN_HEIGHT: usize = 32;
@@ -34,24 +37,43 @@ struct Args {
 
     /// Enable all Cowgod quirks. Some games rely on an inaccurate implementation of
     /// certain instructions and won't run properly without this being enabled.
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = true)]
     quirk_cowgod: bool,
+}
+
+enum AppState {
+    MENU,
+    OPTIONS,
+    PLAYING,
 }
 
 fn main() {
     // Read ROM file from CLI args
     let args = Args::parse();
 
-    let mut chip8 = Chip8::new(args.quirk_cowgod, args.quirk_cowgod, args.quirk_cowgod, args.quirk_cowgod);
+    let mut chip8 = Chip8::new(
+        args.quirk_cowgod,
+        args.quirk_cowgod,
+        args.quirk_cowgod,
+        args.quirk_cowgod,
+    );
     let rom_data = fs::read(args.rom_path).expect("Failed to read ROM!");
     chip8.load(&rom_data);
 
     // Setup SDL and Display
     let sdl_context = sdl2::init().unwrap();
+    let ttf_context = sdl2::ttf::init().unwrap();
     let audio_device = setup_audio(&sdl_context);
     let (fps_manager, canvas) = setup_display(&sdl_context);
 
-    run_loop(chip8, &sdl_context, canvas, fps_manager, audio_device);
+    run_loop(
+        chip8,
+        &sdl_context,
+        &ttf_context,
+        canvas,
+        fps_manager,
+        audio_device,
+    );
 }
 
 fn setup_display(sdl_context: &Sdl) -> (FPSManager, Canvas<Window>) {
@@ -104,11 +126,22 @@ fn setup_audio(sdl_context: &Sdl) -> AudioDevice<SineWave> {
 fn run_loop(
     mut chip8: Chip8,
     sdl_context: &Sdl,
+    ttf_context: &Sdl2TtfContext,
     mut canvas: Canvas<Window>,
     mut fps_manager: FPSManager,
     audio_device: AudioDevice<SineWave>,
 ) {
     let mut event_pump = sdl_context.event_pump().unwrap();
+    let texture_creator = canvas.texture_creator();
+    let menu_texture = create_text_texture(
+        "Welcome to RC8!\n1. Play\n2. Settings\n3. Exit",
+        64,
+        &texture_creator,
+        ttf_context,
+    )
+    .unwrap();
+    let mut options_texture = get_options_texture(&chip8, &texture_creator, ttf_context).unwrap();
+    let mut state = AppState::MENU;
 
     'gameloop: loop {
         // Handle SDL Events
@@ -121,36 +154,90 @@ fn run_loop(
                 } => break 'gameloop,
                 Event::KeyDown {
                     keycode: Some(key), ..
-                } => {
-                    if let Some(c8key) = keycode_to_c8(key) {
-                        chip8.set_key(c8key, true);
+                } => match state {
+                    AppState::PLAYING => {
+                        if let Some(c8key) = keycode_to_c8(key) {
+                            chip8.set_key(c8key, true);
+                        }
                     }
-                }
+                    _ => {}
+                },
                 Event::KeyUp {
                     keycode: Some(key), ..
-                } => {
-                    if let Some(c8key) = keycode_to_c8(key) {
-                        chip8.set_key(c8key, false);
+                } => match state {
+                    AppState::PLAYING => {
+                        if let Some(c8key) = keycode_to_c8(key) {
+                            chip8.set_key(c8key, false);
+                        }
                     }
-                }
+                    AppState::MENU => match key {
+                        Keycode::Num1 => {
+                            state = AppState::PLAYING;
+                        }
+                        Keycode::Num2 => {
+                            state = AppState::OPTIONS;
+                        }
+                        Keycode::Num3 => break 'gameloop,
+                        _ => {}
+                    },
+                    AppState::OPTIONS => {
+                        match key {
+                            Keycode::Num1 => {
+                                chip8.quirk_set(true);
+                            }
+                            Keycode::Num2 => {
+                                chip8.quirk_set(false);
+                            }
+                            Keycode::Num3 => {
+                                chip8.quirk_8xy6 = !chip8.quirk_8xy6;
+                            }
+                            Keycode::Num4 => {
+                                chip8.quirk_8xye = !chip8.quirk_8xye;
+                            }
+                            Keycode::Num5 => {
+                                chip8.quirk_fx55 = !chip8.quirk_fx55;
+                            }
+                            Keycode::Num6 => {
+                                chip8.quirk_fx65 = !chip8.quirk_fx65;
+                            }
+                            Keycode::Num7 => {
+                                state = AppState::MENU;
+                            }
+                            _ => {}
+                        }
+                        options_texture =
+                            get_options_texture(&chip8, &texture_creator, ttf_context).unwrap();
+                    }
+                },
                 _ => {}
             }
         }
 
-        for _ in 0..TICKS_PER_FRAME {
-            chip8.tick();
+        match state {
+            AppState::MENU => {
+                draw_centered_text(&menu_texture, &mut canvas);
+            }
+            AppState::OPTIONS => {
+                draw_centered_text(&options_texture, &mut canvas);
+            }
+            AppState::PLAYING => {
+                for _ in 0..TICKS_PER_FRAME {
+                    chip8.tick();
+                }
+
+                if chip8.tick_timers() {
+                    audio_device.resume();
+                } else {
+                    audio_device.pause();
+                }
+
+                draw_screen(&chip8, &mut canvas);
+
+                // Delay to maintain framerate
+                chip8.notify_vblank();
+            }
         }
 
-        if chip8.tick_timers() {
-            audio_device.resume();
-        } else {
-            audio_device.pause();
-        }
-
-        draw_screen(&chip8, &mut canvas);
-
-        // Delay to maintain framerate
-        chip8.notify_vblank();
         fps_manager.delay();
     }
 }
@@ -198,4 +285,42 @@ fn keycode_to_c8(key: Keycode) -> Option<usize> {
         Keycode::V => Some(0xF),
         _ => None,
     }
+}
+
+fn draw_centered_text(text_texture: &Texture, canvas: &mut Canvas<Window>) {
+    let query = text_texture.query();
+
+    // If the text is too big for the screen, downscale it (and center irregardless)
+    let padding = 64;
+    let target = get_centered_rect(
+        query.width,
+        query.height,
+        (WINDOW_WIDTH - padding) as u32,
+        (WINDOW_HEIGHT - padding) as u32,
+    );
+
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.clear();
+    canvas.copy(&text_texture, None, Some(target)).unwrap();
+    canvas.present();
+}
+
+fn get_options_texture<'a>(
+    chip8: &Chip8,
+    texture_creator: &'a TextureCreator<WindowContext>,
+    ttf_context: &Sdl2TtfContext,
+) -> Result<Texture<'a>, String> {
+    let options_text = format!(
+        "Options\n1. Toggle Quirks ON\n2. Toggle Quirks OFF\n3. quirk_8xy6 {}\n4. quirk_8xye {}\n5. quirk_fx55 {}\n6. quirk_fx65 {}\n7. Back",
+        get_bool_option_text(chip8.quirk_8xy6),
+        get_bool_option_text(chip8.quirk_8xye),
+        get_bool_option_text(chip8.quirk_fx55),
+        get_bool_option_text(chip8.quirk_fx65),
+    );
+
+    create_text_texture(&options_text, 44, &texture_creator, ttf_context)
+}
+
+fn get_bool_option_text(state: bool) -> &'static str {
+    if state { "ON" } else { "OFF" }
 }

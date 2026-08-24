@@ -30,17 +30,17 @@ pub struct Chip8 {
 
     // Input keys
     keys: [bool; NUM_KEYS],
-    keys_prev: [bool; NUM_KEYS],  // maintain 1 frame of history
+    keys_prev: [bool; NUM_KEYS], // maintain 1 frame of history
     state_fx0a_started: bool,
 
     // Only allow 1 draw sprite operation per screen refresh (60Hz)
     wait_for_v_blank: bool,
 
     // Quirks
-    quirk_8xy6: bool,
-    quirk_8xye: bool,
-    quirk_fx55: bool,
-    quirk_fx65: bool,
+    pub quirk_8xy6: bool,
+    pub quirk_8xye: bool,
+    pub quirk_fx55: bool,
+    pub quirk_fx65: bool,
 }
 
 impl Chip8 {
@@ -70,6 +70,14 @@ impl Chip8 {
         c8.ram[FONTSET_START_ADDR..FONTSET_SIZE].copy_from_slice(&FONTSET);
 
         c8
+    }
+
+    // Convenience method for setting all quirks to the desired value
+    pub fn quirk_set(&mut self, state: bool) {
+        self.quirk_8xy6 = state;
+        self.quirk_8xye = state;
+        self.quirk_fx55 = state;
+        self.quirk_fx65 = state;
     }
 
     // Stack Methods
@@ -204,7 +212,11 @@ impl Chip8 {
 
         // Quirk on -> always operate on VX
         let reg_x = instr.reg_x();
-        let reg_y = if self.quirk_8xy6 {reg_x} else {instr.reg_y()};
+        let reg_y = if self.quirk_8xy6 {
+            reg_x
+        } else {
+            instr.reg_y()
+        };
 
         // In case reg_x and reg_y are the same !!
         let orig_val = self.v_reg[reg_y];
@@ -229,7 +241,11 @@ impl Chip8 {
 
         // Quirk on -> always operate on VX
         let reg_x = instr.reg_x();
-        let reg_y = if self.quirk_8xye {reg_x} else {instr.reg_y()};
+        let reg_y = if self.quirk_8xye {
+            reg_x
+        } else {
+            instr.reg_y()
+        };
 
         // In case reg_x and reg_y are the same !!
         let orig_val = self.v_reg[reg_y];

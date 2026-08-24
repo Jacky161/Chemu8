@@ -23,6 +23,7 @@ pub struct Chip8 {
     stack: [u16; STACK_SIZE],
 
     ram: [u8; RAM_SIZE],
+    rom_loaded: bool,
 
     // Timers
     dt: u8,
@@ -53,6 +54,7 @@ impl Chip8 {
             sp: 0,
             stack: [0; STACK_SIZE],
             ram: [0; RAM_SIZE],
+            rom_loaded: false,
             screen: [false; SCREEN_WIDTH * SCREEN_HEIGHT],
             dt: 0,
             st: 0,
@@ -507,6 +509,11 @@ impl Chip8 {
         let start = PC_START_ADDR as usize;
         let end = start + data.len() as usize;
         self.ram[start..end].copy_from_slice(data);
+        self.rom_loaded = true;
+    }
+
+    pub fn rom_loaded(&self) -> bool {
+        self.rom_loaded
     }
 
     pub fn set_key(&mut self, key: usize, state: bool) {

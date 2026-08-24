@@ -9,3 +9,4 @@ sdl2 = { version = "0.38.0", features = ["gfx", "ttf"] }
 rand = "0.10.1"
 rc8_core = { path = "../rc8_core" }
 clap = { version = "4.6.6", features = ["derive"] }
+rfd = "0.17.2"

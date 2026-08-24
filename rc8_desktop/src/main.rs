@@ -20,6 +20,8 @@ use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::ttf::Sdl2TtfContext;
 use sdl2::video::{Window, WindowContext};
 
+use rfd::FileDialog;
+
 const SCREEN_WIDTH: usize = 64;
 const SCREEN_HEIGHT: usize = 32;
 const TICKS_PER_FRAME: usize = 10;
@@ -33,32 +35,30 @@ const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
 #[command(version, about, long_about = None)]
 struct Args {
     /// Path to the rom to load.
-    rom_path: String,
+    #[arg(short, long)]
+    rom: Option<String>,
 
     /// Enable all Cowgod quirks. Some games rely on an inaccurate implementation of
     /// certain instructions and won't run properly without this being enabled.
-    #[arg(long, default_value_t = true)]
-    quirk_cowgod: bool,
+    #[arg(short, long, default_value_t = true)]
+    quirks: bool,
 }
 
-enum AppState {
+enum AppState<'a> {
     MENU,
     OPTIONS,
+    ERROR(Texture<'a>),
     PLAYING,
 }
 
 fn main() {
-    // Read ROM file from CLI args
     let args = Args::parse();
 
-    let mut chip8 = Chip8::new(
-        args.quirk_cowgod,
-        args.quirk_cowgod,
-        args.quirk_cowgod,
-        args.quirk_cowgod,
-    );
-    let rom_data = fs::read(args.rom_path).expect("Failed to read ROM!");
-    chip8.load(&rom_data);
+    let mut chip8 = Chip8::new(args.quirks, args.quirks, args.quirks, args.quirks);
+    if let Some(rom_path) = args.rom {
+        let rom_data = fs::read(rom_path).expect("Failed to read ROM!");
+        chip8.load(&rom_data);
+    }
 
     // Setup SDL and Display
     let sdl_context = sdl2::init().unwrap();
@@ -74,6 +74,30 @@ fn main() {
         fps_manager,
         audio_device,
     );
+}
+
+fn read_ch8_rom_from_picker(chip8: &mut Chip8) -> Result<(), String> {
+    let file = FileDialog::new()
+        .add_filter("Chip8 ROM", &["ch8"])
+        .set_directory("./")
+        .set_title("Select a ROM to Play!")
+        .pick_file();
+
+    match file {
+        Some(path) => {
+            let rom_data = fs::read(path);
+
+            if let Ok(rom_bytes) = rom_data {
+                chip8.load(&rom_bytes);
+                return Ok(());
+            }
+        }
+        None => {
+            return Err(String::from("No ROM provided."));
+        }
+    }
+
+    Err(String::from("Failed to read provided rom."))
 }
 
 fn setup_display(sdl_context: &Sdl) -> (FPSManager, Canvas<Window>) {
@@ -172,14 +196,26 @@ fn run_loop(
                     }
                     AppState::MENU => match key {
                         Keycode::Num1 => {
-                            state = AppState::PLAYING;
+                            // Load ROM
+                            if !chip8.rom_loaded() {
+                                match read_ch8_rom_from_picker(&mut chip8) {
+                                    Ok(..) => {
+                                        state = AppState::PLAYING;
+                                    }
+                                    Err(msg) => {
+                                        state = AppState::ERROR(create_text_texture(&format!("Error: {}\n1. Back", msg), 64, &texture_creator, ttf_context).unwrap());
+                                    }
+                                }
+                            } else {
+                                state = AppState::PLAYING;
+                            }
                         }
                         Keycode::Num2 => {
                             state = AppState::OPTIONS;
                         }
                         Keycode::Num3 => break 'gameloop,
                         _ => {}
-                    },
+                    }
                     AppState::OPTIONS => {
                         match key {
                             Keycode::Num1 => {
@@ -208,17 +244,28 @@ fn run_loop(
                         options_texture =
                             get_options_texture(&chip8, &texture_creator, ttf_context).unwrap();
                     }
+                    AppState::ERROR(_) => {
+                        match key {
+                            Keycode::Num1 => {
+                                state = AppState::MENU;
+                            }
+                            _ => {}
+                        }
+                    }
                 },
                 _ => {}
             }
         }
 
-        match state {
+        match &state {
             AppState::MENU => {
                 draw_centered_text(&menu_texture, &mut canvas);
             }
             AppState::OPTIONS => {
                 draw_centered_text(&options_texture, &mut canvas);
+            }
+            AppState::ERROR(error_texture) => {
+                draw_centered_text(error_texture, &mut canvas);
             }
             AppState::PLAYING => {
                 for _ in 0..TICKS_PER_FRAME {

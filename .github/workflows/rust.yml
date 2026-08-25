@@ -1,0 +1,100 @@
+name: Rust
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-desktop:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: x86_64
+            runner: ubuntu-24.04
+          - name: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwayland-dev libsdl2-dev libsdl2-gfx-dev libsdl2-ttf-dev
+
+      - name: Build
+        run: |
+          cd chemu8_desktop
+          cargo build --verbose --features "static-link use-pkgconfig" --release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: chemu8_desktop-linux-${{ matrix.platform.name }}
+          path: chemu8_desktop/target/release/chemu8_desktop
+          compression-level: 9
+
+  build-desktop-macos:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: x86_64
+            runner: macOS-26-intel
+          - name: arm64
+            runner: macOS-26
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          brew install sdl2 sdl2_gfx sdl2_ttf
+
+      - name: Build
+        run: |
+          cd chemu8_desktop
+          cargo build --verbose --features "static-link use-pkgconfig" --release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: chemu8_desktop-macos-${{ matrix.platform.name }}
+          path: chemu8_desktop/target/release/chemu8_desktop
+          compression-level: 9
+
+  build-desktop-windows:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: x86_64
+            runner: windows-latest
+          - name: arm64
+            runner: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          cd chemu8_desktop
+          cargo install cargo-vcpkg
+          cargo vcpkg build
+          cargo build --verbose --features "static-link use-vcpkg" --release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: chemu8_desktop-windows-${{ matrix.platform.name }}
+          path: chemu8_desktop/target/release/chemu8_desktop.exe
+          compression-level: 9

@@ -294,3 +294,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+
+defaults:
+  run:
+    working-directory: chemu8_desktop

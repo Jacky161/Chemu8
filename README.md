@@ -8,7 +8,9 @@ Chemu8 Desktop can be compiled and ran on Windows/MacOS/Linux. The UI can be int
 
 ### Compiling and Running
 
-Download the latest release from the [releases page](https://github.com/Jacky161/Chemu8/releases) or clone the source code to compile it yourself.
+Download the latest release from the [releases page](https://github.com/Jacky161/Chemu8/releases) or clone the source code to compile it yourself. You will also need to install SDL2 if you are on MacOS or Linux.
+
+On MacOS, run `brew install sdl2 sdl2_gfx sdl2_ttf`. Use your distribution's package manage to install the corresponding packages on Linux.
 
 To compile the code yourself, `cd` into the `chemu8_desktop` folder and run `cargo build` or `cargo build --release` for a debug/release build respectively. You will need to have Rust installed on your system. The compiled binary is located in `./target/{debug/release}/chemu8_desktop`.
 

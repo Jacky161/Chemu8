@@ -17,6 +17,7 @@ rfd = "0.17.2"
 inherits = "release"
 lto = "thin"
 pr-run-mode = "upload"
+allow-dirty = true
 
 [package.metadata.dist.dependencies.apt]
 "libsdl2-dev" = "*"

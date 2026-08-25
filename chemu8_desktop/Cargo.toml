@@ -3,10 +3,27 @@ name = "chemu8_desktop"
 version = "0.1.0"
 edition = "2024"
 description = "A Chip8 emulator written in Rust."
+repository = "https://github.com/Jacky161/Chemu8"
 
 [dependencies]
-sdl2 = { version = "0.38.0", features = ["gfx", "ttf"] }
+sdl2 = { version = "0.38.0", features = ["gfx", "ttf", "use-pkgconfig", "static-link"] }
 rand = "0.10.1"
 chemu8_core = { path = "../chemu8_core" }
 clap = { version = "4.6.6", features = ["derive"] }
 rfd = "0.17.2"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
+
+[package.metadata.dist.dependencies.apt]
+"libsdl2-dev" = "*"
+"libsdl2-gfx-dev" = "*"
+"libsdl2-ttf-dev" = "*"
+"libwayland-dev" = "*"
+
+[package.metadata.dist.dependencies.homebrew]
+"sdl2" = "*"
+"sdl2_gfx" = "*"
+"sdl2_ttf" = "*"

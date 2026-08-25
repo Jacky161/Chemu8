@@ -26,7 +26,7 @@ Enabling or disabling quirks may be required for certain games to behave properl
 
 ## Controls
 
-The Chip8 features a keypad with 16 buttons, arranged in 4 rows of 4 buttons each. The mapping is standard across emulators, and is as follows.
+The Chip8 features a keypad with 16 buttons, arranged in 4 rows of 4 buttons each. The mapping is standard across Chip8 emulators, and is as follows.
 
 ```
 Keypad       Keyboard

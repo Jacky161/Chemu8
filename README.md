@@ -14,6 +14,33 @@ To compile the code yourself, `cd` into the `chemu8_desktop` folder and run `car
 
 Use the `--help` flag to see all the available CLI arguments.
 
+## Configuration
+
+Currently, the only configurable option is quirks. By default, all quirks are enabled to maximize compatability out of the box.
+
+Quirks stem from minor differences in the implementations of particular Chip8 instructions. The most common reference, [Cowgod](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM) has some inaccuracies in the descriptions of `8xy6`, `8xye`, `fx55`, and `fx65`. Some games have been implemented assuming this inaccurate behaviour, leading to issues when playing them with emulators that have been implemented with corrected references.
+
+Setting quirks enabled in Chemu8 (the default) will have the affected instructions behave according to the Cowgod reference. Disabling quirks will use the accurate behaviour as seen in corrected references (such as in [Matthew Mikolay's reference](https://github.com/mattmikolay/chip-8/wiki)).
+
+Enabling or disabling quirks may be required for certain games to behave properly.
+
+## Controls
+
+The Chip8 features a keypad with 16 buttons, arranged in 4 rows of 4 buttons each. The mapping is standard across emulators, and is as follows.
+
+```
+Keypad       Keyboard
++-+-+-+-+    +-+-+-+-+
+|1|2|3|C|    |1|2|3|4|
++-+-+-+-+    +-+-+-+-+
+|4|5|6|D|    |Q|W|E|R|
++-+-+-+-+ => +-+-+-+-+
+|7|8|9|E|    |A|S|D|F|
++-+-+-+-+    +-+-+-+-+
+|A|0|B|F|    |Z|X|C|V|
++-+-+-+-+    +-+-+-+-+
+```
+
 ## ROMs
 
 Find ROMs to use with this emulator here!

@@ -49,6 +49,7 @@ struct Args {
 enum AppState<'a> {
     MENU,
     OPTIONS,
+    CONTROLS,
     ERROR(Texture<'a>),
     PLAYING,
 }
@@ -160,8 +161,15 @@ fn run_loop(
     let mut event_pump = sdl_context.event_pump().unwrap();
     let texture_creator = canvas.texture_creator();
     let menu_texture = create_text_texture(
-        "Welcome to Chemu8!\n1. Play\n2. Settings\n3. Exit",
+        "Welcome to Chemu8!\n1. Play\n2. Settings\n3. Controls\n4. Exit",
         64,
+        &texture_creator,
+        ttf_context,
+    )
+    .unwrap();
+    let controls_texture = create_text_texture(
+        "Chip8 uses these keys:\n- 1-4\n- Q-R\n- A-F\n- Z-V\n1. Back",
+        58,
         &texture_creator,
         ttf_context,
     )
@@ -205,7 +213,15 @@ fn run_loop(
                                         state = AppState::PLAYING;
                                     }
                                     Err(msg) => {
-                                        state = AppState::ERROR(create_text_texture(&format!("Error: {}\n1. Back", msg), 64, &texture_creator, ttf_context).unwrap());
+                                        state = AppState::ERROR(
+                                            create_text_texture(
+                                                &format!("Error: {}\n1. Back", msg),
+                                                64,
+                                                &texture_creator,
+                                                ttf_context,
+                                            )
+                                            .unwrap(),
+                                        );
                                     }
                                 }
                             } else {
@@ -215,7 +231,10 @@ fn run_loop(
                         Keycode::Num2 => {
                             state = AppState::OPTIONS;
                         }
-                        Keycode::Num3 => break 'gameloop,
+                        Keycode::Num3 => {
+                            state = AppState::CONTROLS;
+                        }
+                        Keycode::Num4 => break 'gameloop,
                         _ => {}
                     }
                     AppState::OPTIONS => {
@@ -246,13 +265,11 @@ fn run_loop(
                         options_texture =
                             get_options_texture(&chip8, &texture_creator, ttf_context).unwrap();
                     }
-                    AppState::ERROR(_) => {
-                        match key {
-                            Keycode::Num1 => {
-                                state = AppState::MENU;
-                            }
-                            _ => {}
+                    AppState::CONTROLS | AppState::ERROR(_) => match key {
+                        Keycode::Num1 => {
+                            state = AppState::MENU;
                         }
+                        _ => {}
                     }
                 },
                 _ => {}
@@ -265,6 +282,9 @@ fn run_loop(
             }
             AppState::OPTIONS => {
                 draw_centered_text(&options_texture, &mut canvas);
+            }
+            AppState::CONTROLS => {
+                draw_centered_text(&controls_texture, &mut canvas);
             }
             AppState::ERROR(error_texture) => {
                 draw_centered_text(error_texture, &mut canvas);

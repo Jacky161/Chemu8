@@ -18,8 +18,6 @@ jobs:
         platform:
           - name: x86_64
             runner: ubuntu-24.04
-          - name: arm64
-            runner: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,12 +25,31 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwayland-dev libsdl2-dev libsdl2-gfx-dev libsdl2-ttf-dev
+          sudo apt-get install -y libwayland-dev autoconf autoconf-archive automake libtool libltdl-dev
+          sudo apt-get install -y \
+            build-essential cmake ninja-build pkg-config \
+            libx11-dev libxext-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev libxi-dev libxss-dev libxxf86vm-dev \
+            libwayland-dev wayland-protocols libxkbcommon-dev libdecor-0-dev \
+            libegl1-mesa-dev libgl1-mesa-dev libgbm-dev \
+            libasound2-dev libpulse-dev libudev-dev libdbus-1-dev
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            chemu8_core/target
+            chemu8_desktop/target
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
         run: |
           cd chemu8_desktop
-          cargo build --verbose --features "static-link use-pkgconfig" --release
+          cargo install cargo-vcpkg
+          cargo vcpkg build || true
+          cargo build --verbose --features "static-link use-vcpkg" --release
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
@@ -55,14 +72,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: |
-          brew install sdl2 sdl2_gfx sdl2_ttf
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            chemu8_core/target
+            chemu8_desktop/target
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
         run: |
           cd chemu8_desktop
-          cargo build --verbose --features "static-link use-pkgconfig" --release
+          cargo install cargo-vcpkg
+          cargo vcpkg build
+          cargo build --verbose --features "static-link use-vcpkg" --release
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
@@ -79,11 +104,19 @@ jobs:
         platform:
           - name: x86_64
             runner: windows-latest
-          - name: arm64
-            runner: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            chemu8_core/target
+            chemu8_desktop/target
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
         run: |

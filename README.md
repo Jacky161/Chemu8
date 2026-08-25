@@ -4,25 +4,51 @@ Chemu8 is a Chip8 emulator written in Rust. A desktop version is available, with
 
 ## Chemu8 Desktop
 
-Chemu8 Desktop can be compiled and ran on Windows/MacOS/Linux. The UI can be interacted with using the indicated number keys. If you prefer, you may use CLI arguments to pass the ROM file, as well as enable/disable quirks. The UI also features these same options.
+Chemu8 Desktop can be compiled and ran on Windows/MacOS/Linux. The UI can be interacted with by pressing the indicated number keys on your keyboard. If you prefer, you may use CLI arguments to pass the ROM file, as well as enable/disable quirks (use the `--help` flag to view all options). The UI also features these same options.
 
 ### Compiling and Running
 
-Download the latest release from the [releases page](https://github.com/Jacky161/Chemu8/releases) or clone the source code to compile it yourself. You will also need to install SDL2 if you are on MacOS or Linux.
+Download the latest release from the [releases page](https://github.com/Jacky161/Chemu8/releases) or clone the source code to compile it yourself.
 
-#### MacOS
-
-On MacOS, run `brew install sdl2 sdl2_gfx sdl2_ttf`. You will also need to unblock the application after running it. To do this, go to System Settings -> Privacy & Security and press "Open Anyway". You can also run `xattr -d com.apple.quarantine chemu8_desktop` to accomplish the same via the terminal.
-
-#### Linux
-
-Use your distribution's package manager to install the SDL2, SDL2 GFX, and SDL2 TTF packages. For example, for Arch Linux, run `sudo pacman -S sdl2 sdl2_gfx sdl2_ttf`.
+> [!NOTE]
+> MacOS users will need to unblock the application to allow it to run, as it is not notarized. To do this, go to System Settings -> Privacy & Security and press "Open Anyway" after attempting to launch the emulator once. You can also run `xattr -d com.apple.quarantine chemu8_desktop` to accomplish the same via the terminal.
 
 #### Manual Compilation
 
-To compile the code yourself, `cd` into the `chemu8_desktop` folder and run `cargo build` or `cargo build --release` for a debug/release build respectively. You will need to have Rust installed on your system, as well as SDL2, SDL2 GFX, and SDL2 TTF. The compiled binary is located in `./target/{debug/release}/chemu8_desktop`.
+Firstly, you will need to have a Rust toolchain installed. Consult the [official Rust documentation](https://rust-lang.org/tools/install/) for instructions. You will also need to install SDL2, alongside the `gfx` and `ttf` libraries.
 
-Use the `--help` flag to see all the available CLI arguments.
+##### MacOS
+
+Assuming you have Homebrew installed:
+
+```bash
+brew install sdl2 sdl2_gfx sdl2_ttf
+```
+
+#### Linux
+
+Use your distribution's package manager. Instructions for common distros are given below.
+
+**Debian / Ubuntu Based**
+
+```bash
+sudo apt update
+sudo apt install -y libsdl2-dev libsdl2-ttf-dev libsdl2-gfx-dev
+```
+
+**Arch Based**
+
+```bash
+sudo pacman -S --needed sdl2 sdl2_ttf sdl2_gfx
+```
+
+**Fedora / RHEL Based**
+
+```bash
+sudo dnf install -y SDL2-devel SDL2_ttf-devel SDL2_gfx-devel
+```
+
+After installing dependencies, `cd` into the `chemu8_desktop` folder and run `cargo build` or `cargo build --release` for a debug/release build respectively. The compiled binary can then be found at `./target/{debug/release}/chemu8_desktop`.
 
 ## Configuration
 

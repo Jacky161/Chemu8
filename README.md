@@ -20,7 +20,7 @@ Use your distribution's package manager to install the SDL2, SDL2 GFX, and SDL2 
 
 #### Manual Compilation
 
-To compile the code yourself, `cd` into the `chemu8_desktop` folder and run `cargo build` or `cargo build --release` for a debug/release build respectively. You will need to have Rust installed on your system. The compiled binary is located in `./target/{debug/release}/chemu8_desktop`.
+To compile the code yourself, `cd` into the `chemu8_desktop` folder and run `cargo build` or `cargo build --release` for a debug/release build respectively. You will need to have Rust installed on your system, as well as SDL2, SDL2 GFX, and SDL2 TTF. The compiled binary is located in `./target/{debug/release}/chemu8_desktop`.
 
 Use the `--help` flag to see all the available CLI arguments.
 

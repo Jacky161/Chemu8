@@ -4,6 +4,8 @@ Chemu8 is a Chip8 emulator written in Rust. A desktop version is available, with
 
 ## Chemu8 Desktop
 
+![Tetris Running on Chemu8 Desktop](assets/tetris_gameplay.png)
+
 Chemu8 Desktop can be compiled and ran on Windows/MacOS/Linux. The UI can be interacted with by pressing the indicated number keys on your keyboard. If you prefer, you may use CLI arguments to pass the ROM file, as well as enable/disable quirks (use the `--help` flag to view all options). The UI also features these same options.
 
 ### Compiling and Running

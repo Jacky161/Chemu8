@@ -8,6 +8,7 @@ on:
       - "chemu8_wasm/**"
       - "web/**"
       - ".github/workflows/web.yml"
+  workflow_dispatch:
 
 jobs:
   deploy:

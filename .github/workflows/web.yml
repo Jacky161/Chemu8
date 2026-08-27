@@ -39,10 +39,12 @@ jobs:
           cache: true
           cache-dependency-path: "web/pnpm-lock.yaml"
           package-json-file: "web/package.json"
+          install: false
 
       - name: Build Vite App
         run: |
           cd web
+          pnpm install --frozen-lockfile
           pnpm run build
 
       - name: Build & Deploy Worker

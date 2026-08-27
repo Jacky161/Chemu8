@@ -1,12 +1,12 @@
 # Chemu8
 
+[Try out the web version!](https://jacky161.github.io/Chemu8/)
+
 Chemu8 is a Chip8 emulator written in Rust with both a web and native desktop version available. Both versions utilise the same core Rust backend, located inside the `chemu8_core` directory.
 
 ![Tetris Running on Chemu8](assets/tetris_gameplay.png)
 
 ## Chemu8 Web
-
-[Try it out!](https://jacky161.github.io/Chemu8/)
 
 Chemu8 Web can be used in any reasonably modern web browser. The core Rust code is compiled to WebAssembly, allowing it to run natively inside of a browser. Vite with React is used for the frontend, with the game simply rendering onto an HTML5 Canvas.
 

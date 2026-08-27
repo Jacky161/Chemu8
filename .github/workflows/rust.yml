@@ -6,6 +6,7 @@ on:
     paths:
       - "chemu8_core/**"
       - "chemu8_desktop/**"
+      - ".github/workflows/rust.yml"
   pull_request:
     branches: ["main"]
 

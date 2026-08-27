@@ -3,6 +3,9 @@ name: Rust
 on:
   push:
     branches: ["main"]
+    paths:
+      - "chemu8_core/**"
+      - "chemu8_desktop/**"
   pull_request:
     branches: ["main"]
 
@@ -48,7 +51,7 @@ jobs:
         run: |
           cd chemu8_desktop
           cargo install cargo-vcpkg
-          cargo vcpkg build || true
+          cargo vcpkg build
           cargo build --verbose --features "static-link use-vcpkg" --release
 
       - name: Upload Artifact

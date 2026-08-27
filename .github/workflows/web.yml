@@ -1,0 +1,53 @@
+name: Deploy Worker
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "chemu8_core/**"
+      - "chemu8_wasm/**"
+      - "web/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            chemu8_core/target
+            chemu8_wasm/target
+            chemu8_wasm/pkg
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-web-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Rust WASM
+        run: |
+          cd chemu8_wasm
+          cargo install wasm-pack
+          ~/.cargo/bin/wasm-pack build
+
+      - name: Install pnpm
+        uses: pnpm/setup@v2
+        with:
+          version: "^11.23.0"
+          cache: true
+          cache-dependency-path: "web/pnpm-lock.yaml"
+          package-json-file: "web/package.json"
+
+      - name: Build Vite App
+        run: |
+          cd web
+          pnpm run build
+
+      - name: Build & Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: "web"

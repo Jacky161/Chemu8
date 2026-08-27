@@ -74,14 +74,6 @@ impl Chip8 {
         c8
     }
 
-    // Convenience method for setting all quirks to the desired value
-    pub fn quirk_set(&mut self, state: bool) {
-        self.quirk_8xy6 = state;
-        self.quirk_8xye = state;
-        self.quirk_fx55 = state;
-        self.quirk_fx65 = state;
-    }
-
     // Stack Methods
     fn stack_push(&mut self, addr: u16) {
         self.stack[self.sp as usize] = addr;
@@ -520,5 +512,13 @@ impl Chip8 {
         // Copy previous history
         self.keys_prev.copy_from_slice(&self.keys);
         self.keys[key] = state;
+    }
+
+    // Convenience method for setting all quirks to the desired value
+    pub fn quirk_set(&mut self, state: bool) {
+        self.quirk_8xy6 = state;
+        self.quirk_8xye = state;
+        self.quirk_fx55 = state;
+        self.quirk_fx65 = state;
     }
 }

@@ -55,10 +55,14 @@ jobs:
           package-json-file: "web/package.json"
           install: false
 
-      - name: Build Vite App
+      - name: Install Frontend Dependencies
         run: |
           cd web
           pnpm install --frozen-lockfile
+
+      - name: Build (Cloudflare)
+        run: |
+          cd web
           pnpm run build
 
       - name: Build & Deploy Worker
@@ -67,6 +71,11 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: "web"
+
+      - name: Build (GitHub Pages)
+        run: |
+          cd web
+          VITE_BASE_PATH="/Chemu8/" pnpm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

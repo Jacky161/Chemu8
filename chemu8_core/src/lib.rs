@@ -38,15 +38,13 @@ pub struct Chip8 {
     wait_for_v_blank: bool,
 
     // Quirks
-    pub quirk_8xy6: bool,
-    pub quirk_8xye: bool,
-    pub quirk_fx55: bool,
-    pub quirk_fx65: bool,
+    pub quirk_shifting: bool,
+    pub quirk_memory: bool,
 }
 
 impl Chip8 {
     // Constructor
-    pub fn new(quirk_8xy6: bool, quirk_8xye: bool, quirk_fx55: bool, quirk_fx65: bool) -> Self {
+    pub fn new(quirk_shifting: bool, quirk_memory: bool) -> Self {
         let mut c8 = Self {
             pc: PC_START_ADDR,
             v_reg: [0; NUM_REGS],
@@ -62,10 +60,8 @@ impl Chip8 {
             keys_prev: [false; NUM_KEYS],
             state_fx0a_started: false,
             wait_for_v_blank: false,
-            quirk_8xy6,
-            quirk_8xye,
-            quirk_fx55,
-            quirk_fx65,
+            quirk_shifting,
+            quirk_memory,
         };
 
         // Copy fonts into RAM
@@ -206,7 +202,7 @@ impl Chip8 {
 
         // Quirk on -> always operate on VX
         let reg_x = instr.reg_x();
-        let reg_y = if self.quirk_8xy6 {
+        let reg_y = if self.quirk_shifting {
             reg_x
         } else {
             instr.reg_y()
@@ -235,7 +231,7 @@ impl Chip8 {
 
         // Quirk on -> always operate on VX
         let reg_x = instr.reg_x();
-        let reg_y = if self.quirk_8xye {
+        let reg_y = if self.quirk_shifting {
             reg_x
         } else {
             instr.reg_y()
@@ -397,7 +393,7 @@ impl Chip8 {
         }
 
         // Quirk on -> don't modify i_reg
-        if self.quirk_fx55 {
+        if self.quirk_memory {
             self.i_reg = i_reg_start
         }
     }
@@ -411,7 +407,7 @@ impl Chip8 {
         }
 
         // Quirk on -> don't modify i_reg
-        if self.quirk_fx65 {
+        if self.quirk_memory {
             self.i_reg = i_reg_start
         }
     }
@@ -512,13 +508,5 @@ impl Chip8 {
         // Copy previous history
         self.keys_prev.copy_from_slice(&self.keys);
         self.keys[key] = state;
-    }
-
-    // Convenience method for setting all quirks to the desired value
-    pub fn quirk_set(&mut self, state: bool) {
-        self.quirk_8xy6 = state;
-        self.quirk_8xye = state;
-        self.quirk_fx55 = state;
-        self.quirk_fx65 = state;
     }
 }

@@ -18,7 +18,7 @@ pub struct Chip8Wasm {
 impl Chip8Wasm {
     #[wasm_bindgen(constructor)]
     pub fn new(canvas_id: &str) -> Result<Self, JsValue> {
-        let chip8 = Chip8::new(true, true, true, true);
+        let chip8 = Chip8::new(true, true);
 
         let document = web_sys::window().unwrap().document().unwrap();
         let canvas = document.get_element_by_id(canvas_id).unwrap();
@@ -33,7 +33,7 @@ impl Chip8Wasm {
 
     #[wasm_bindgen]
     pub fn reset(&mut self) {
-        self.chip8 = Chip8::new(true, true, true, true);
+        self.chip8 = Chip8::new(true, true);
     }
 
     #[wasm_bindgen]

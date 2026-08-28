@@ -36,14 +36,19 @@ const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Path to the rom to load.
+    /// Path to the rom to load. If this is provided, the emulator menu is skipped.
     #[arg(short, long)]
     rom: Option<String>,
 
-    /// Enable all Cowgod quirks. Some games rely on an inaccurate implementation of
-    /// certain instructions and won't run properly without this being enabled.
-    #[arg(short, long, default_value_t = true)]
-    quirks: bool,
+    /// By default, bitshift instructions shift VX inplace instead of shifting VY and storing in VX.
+    /// Using this flag will disable this behaviour. May be required depending on the game.
+    #[arg(long, default_value_t = false)]
+    disable_quirk_shifting: bool,
+
+    /// By default, save and load instructions will not increment the I register.
+    /// Using this flag will disable this behaviour. May be required depending on the game.
+    #[arg(long, default_value_t = false)]
+    disable_quirk_memory: bool,
 }
 
 enum AppState<'a> {
@@ -57,7 +62,7 @@ enum AppState<'a> {
 fn main() {
     let args = Args::parse();
 
-    let mut chip8 = Chip8::new(args.quirks, args.quirks, args.quirks, args.quirks);
+    let mut chip8 = Chip8::new(!args.disable_quirk_shifting, !args.disable_quirk_memory);
     if let Some(rom_path) = args.rom {
         let rom_data = fs::read(rom_path).expect("Failed to read ROM!");
         chip8.load(&rom_data);
@@ -175,7 +180,11 @@ fn run_loop(
     )
     .unwrap();
     let mut options_texture = get_options_texture(&chip8, &texture_creator, ttf_context).unwrap();
-    let mut state = AppState::MENU;
+    let mut state = if chip8.rom_loaded() {
+        AppState::PLAYING
+    } else {
+        AppState::MENU
+    };
 
     'gameloop: loop {
         // Handle SDL Events
@@ -236,28 +245,24 @@ fn run_loop(
                         }
                         Keycode::Num4 => break 'gameloop,
                         _ => {}
-                    }
+                    },
                     AppState::OPTIONS => {
                         match key {
                             Keycode::Num1 => {
-                                chip8.quirk_set(true);
+                                chip8.quirk_shifting = true;
+                                chip8.quirk_memory = true;
                             }
                             Keycode::Num2 => {
-                                chip8.quirk_set(false);
+                                chip8.quirk_shifting = false;
+                                chip8.quirk_memory = false;
                             }
                             Keycode::Num3 => {
-                                chip8.quirk_8xy6 = !chip8.quirk_8xy6;
+                                chip8.quirk_shifting = !chip8.quirk_shifting;
                             }
                             Keycode::Num4 => {
-                                chip8.quirk_8xye = !chip8.quirk_8xye;
+                                chip8.quirk_memory = !chip8.quirk_memory;
                             }
                             Keycode::Num5 => {
-                                chip8.quirk_fx55 = !chip8.quirk_fx55;
-                            }
-                            Keycode::Num6 => {
-                                chip8.quirk_fx65 = !chip8.quirk_fx65;
-                            }
-                            Keycode::Num7 => {
                                 state = AppState::MENU;
                             }
                             _ => {}
@@ -270,7 +275,7 @@ fn run_loop(
                             state = AppState::MENU;
                         }
                         _ => {}
-                    }
+                    },
                 },
                 _ => {}
             }
@@ -380,11 +385,9 @@ fn get_options_texture<'a>(
     ttf_context: &Sdl2TtfContext,
 ) -> Result<Texture<'a>, String> {
     let options_text = format!(
-        "Options\n1. Toggle Quirks ON\n2. Toggle Quirks OFF\n3. quirk_8xy6 {}\n4. quirk_8xye {}\n5. quirk_fx55 {}\n6. quirk_fx65 {}\n7. Back",
-        get_bool_option_text(chip8.quirk_8xy6),
-        get_bool_option_text(chip8.quirk_8xye),
-        get_bool_option_text(chip8.quirk_fx55),
-        get_bool_option_text(chip8.quirk_fx65),
+        "Options\n1. Toggle Quirks ON\n2. Toggle Quirks OFF\n3. Shifting Quirk - {}\n4. Memory Quirk - {}\n5. Back",
+        get_bool_option_text(chip8.quirk_shifting),
+        get_bool_option_text(chip8.quirk_memory),
     );
 
     create_text_texture(&options_text, 44, &texture_creator, ttf_context)

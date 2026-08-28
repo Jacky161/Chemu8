@@ -79,6 +79,26 @@ impl Chip8Wasm {
             }
         }
     }
+
+    #[wasm_bindgen]
+    pub fn quirk_shifting(&self) -> bool {
+        self.chip8.quirk_shifting
+    }
+
+    #[wasm_bindgen]
+    pub fn set_quirk_shifting(&mut self, quirk_shifting: bool) {
+        self.chip8.quirk_shifting = quirk_shifting;
+    }
+
+    #[wasm_bindgen]
+    pub fn quirk_memory(&self) -> bool {
+        self.chip8.quirk_memory
+    }
+
+    #[wasm_bindgen]
+    pub fn set_quirk_memory(&mut self, quirk_memory: bool) {
+        self.chip8.quirk_memory = quirk_memory;
+    }
 }
 
 fn key2btn(key: &str) -> Option<usize> {

@@ -21,6 +21,9 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { start: startSineWave, stop: stopSineWave } = useSineWave();
 
+  const [quirkShifting, setQuirkShifting] = useState(true);
+  const [quirkMemory, setQuirkMemory] = useState(true);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const requestAnimFrameRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef(0);
@@ -44,6 +47,8 @@ function App() {
 
       const rom = new Uint8Array(buffer);
       chip8.reset()
+      chip8.set_quirk_shifting(quirkShifting);
+      chip8.set_quirk_memory(quirkMemory);
       chip8.load_game(rom)
       setRomLoaded(true);
     };
@@ -63,6 +68,10 @@ function App() {
     }
     document.addEventListener("keydown", keyDownListener);
     document.addEventListener("keyup", keyUpListener);
+
+    // Sync quirks with chip8 instance
+    setQuirkShifting(chip8.quirk_shifting());
+    setQuirkMemory(chip8.quirk_memory());
 
     return () => {
       // Cleanup function
@@ -126,6 +135,12 @@ function App() {
     }
   }, [romLoaded])
 
+  // Update backend when quirk is changed
+  useEffect(() => {
+    chip8Ref.current?.set_quirk_shifting(quirkShifting);
+    chip8Ref.current?.set_quirk_memory(quirkMemory);
+  }, [quirkShifting, quirkMemory])
+
   return (
     <>
       <section id="center">
@@ -146,13 +161,45 @@ function App() {
           style={{ display: 'none' }}
           accept=".ch8"
         />
-        <button
-          type="button"
-          className="button"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          Load ROM
-        </button>
+
+        <div className="controls-panel">
+          <div className="action-row">
+            <button
+              type="button"
+              className="button primary-btn"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Load ROM
+            </button>
+          </div>
+
+          <fieldset className="settings-card">
+            <legend className="settings-legend">Quirk Options</legend>
+
+            <div className="quirks-row">
+              <label className="quirk-toggle">
+                <input
+                  type="checkbox"
+                  name="quirkShifting"
+                  checked={quirkShifting}
+                  onChange={(event) => setQuirkShifting(event.target.checked)}
+                />
+                <span className="toggle-label">Shifting</span>
+              </label>
+
+              <label className="quirk-toggle">
+                <input
+                  type="checkbox"
+                  name="quirkMemory"
+                  checked={quirkMemory}
+                  onChange={(event) => setQuirkMemory(event.target.checked)}
+                />
+                <span className="toggle-label">Memory</span>
+              </label>
+            </div>
+          </fieldset>
+        </div>
+
       </section>
     </>
   );
